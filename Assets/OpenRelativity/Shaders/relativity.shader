@@ -1,18 +1,19 @@
-Shader "Relativity/ColorShift" 
-{
-	Properties 
-	{
-		_MainTex ("Base (RGB)", 2D) = "" {} //Visible Spectrum Texture ( RGB )
-		_UVTex("UV",2D) = "" {} //UV texture
-		_IRTex("IR",2D) = "" {} //IR texture
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Relativity2/ColorShft" {
+	Properties {
+		_MainTex ("Albedo (RGB)", 2D) = "white" {}
+		_Glossiness ("Smoothness", Range(0,1)) = 0.5
+		_Metallic ("Metallic", Range(0,1)) = 0.0
 		_viw ("viw", Vector)=(0,0,0,0) //Vector that represents object's velocity in world frame
 		_strtTime ("strtTime", float)=0 //For moving objects, when they created, this variable is set to current world time
 		_Cutoff ("Base Alpha cutoff", Range (0,.9)) = 0.1 //Used to determine when not to render alpha materials
 	}
-	
+
 	CGINCLUDE
 	// Upgrade NOTE: excluded shader from DX11 and Xbox360; has structs without semantics (struct v2f members pos2,uv1,svc,vr,draw)
-	#pragma exclude_renderers d3d11 xbox360
+	// #pragma exclude_renderers d3d11 xbox360
+
 	// Upgrade NOTE: excluded shader from Xbox360; has structs without semantics (struct v2f members pos2,uv1,svc,vr)	
 	// Not sure when this^ got added, seems like unity did it automatically some update?
 	#pragma exclude_renderers xbox360
@@ -42,7 +43,6 @@ Shader "Relativity/ColorShift"
 	#define UV_RANGE 380
 	#define UV_START 0
 
-	 
 	//This is the data sent from the vertex shader to the fragment shader
 	struct v2f 
 	{
@@ -53,7 +53,6 @@ Shader "Relativity/ColorShift"
 		float4 vr : TEXCOORD3; //Relative velocity of object vpc - viw
 		float draw : TEXCOORD4; //Draw the vertex?  Used to not draw objects that are calculated to be seen before they were created. Object's start time is used to determine this. If something comes out of a building, it should not draw behind the building.
 	};
-	
 
 	//Variables that we use to access texture data
 	sampler2D _MainTex;
@@ -74,13 +73,16 @@ Shader "Relativity/ColorShift"
 	 
 	uniform float4 _MainTex_TexelSize;
 	uniform float4 _CameraDepthTexture_ST;
-		
+
 	//Per vertex operations
 	v2f vert( appdata_img v ) 
 	{
 		v2f o;
 
-		o.pos = mul(_Object2World, v.vertex); //get position in world frame	
+
+		// o.pos = UnityObjectToClipPos(unity_ObjectToWorld); //get position in world frame	
+		// o.pos = float4(0, 0, 0, 0);
+		o.pos = mul(unity_ObjectToWorld, v.vertex);
 		o.pos -= _playerOffset; //Shift such that we use a coordinate system where the player is at 0,0,0
 		
 
@@ -228,19 +230,22 @@ Shader "Relativity/ColorShift"
 		
 		riw += _playerOffset;
 	
+		o.pos2 = float4(0, 0, 0, 0);
         //Transform the vertex back into local space for the mesh to use it
-		o.pos = mul(_World2Object*1.0,riw);
-
-		o.pos2 = mul(_Object2World, o.pos );
+		// o.pos = UnityObjectToClipPos(unity_WorldToObject*1.0);
+		o.pos = mul(unity_WorldToObject*1.0, riw);
+		// o.pos2 = UnityObjectToClipPos(unity_ObjectToWorld);
+		o.pos2 =  mul(unity_ObjectToWorld, o.pos);
 		o.pos2 -= _playerOffset;
 		
 
-		o.pos = mul(UNITY_MATRIX_MVP, o.pos);
+		o.pos = UnityObjectToClipPos(o.pos);
 	   
 
 		return o;
 	}
-	
+
+
 	//Color functions, there's no check for division by 0 which may cause issues on
 	//some graphics cards.
 	float3 RGBToXYZC(  float r,  float g,  float b)
@@ -260,15 +265,6 @@ Shader "Relativity/ColorShift"
 
 		return rgb;
 	}
-	float3 weightFromXYZCurves(float3 xyz)
-	{
-		float3 returnVal;
-		returnVal.x = 0.0735806 * xyz.x -0.0380793 * xyz.y - 0.00860837 * xyz.z;
-		returnVal.y = -0.0665378 * xyz.x +  0.134408 * xyz.y - 0.000417865 * xyz.z;
-		returnVal.z = 0.00000299624 * xyz.x - 0.00000605249 * xyz.y + 0.0484424 * xyz.z;
-		return returnVal;
-	}
-	
 	 float getXFromCurve(float3 param,  float shift)
 	{
 		 float top1 = param.x * xla * exp( (float)(-(pow((param.y*shift) - xlb,2)
@@ -289,7 +285,6 @@ Shader "Relativity/ColorShift"
 
 		return top/bottom;
 	}
-
 	 float getZFromCurve(float3 param,  float shift)
 	{
 		 float top = param.x * za * exp( float(-(pow((param.y*shift) - zb,2)
@@ -298,7 +293,14 @@ Shader "Relativity/ColorShift"
 
 		return top/bottom;
 	}
-	
+	float3 weightFromXYZCurves(float3 xyz)
+	{
+		float3 returnVal;
+		returnVal.x = 0.0735806 * xyz.x -0.0380793 * xyz.y - 0.00860837 * xyz.z;
+		returnVal.y = -0.0665378 * xyz.x +  0.134408 * xyz.y - 0.000417865 * xyz.z;
+		returnVal.z = 0.00000299624 * xyz.x - 0.00000605249 * xyz.y + 0.0484424 * xyz.z;
+		return returnVal;
+	}
 	float3 constrainRGB( float r,  float g,  float b)
 	{
 		float w;
@@ -328,7 +330,6 @@ Shader "Relativity/ColorShift"
 		return rgb;
 
 	};	
-			
 	//Per pixel shader, does color modifications
 	float4 frag(v2f i) : COLOR 
 	{
@@ -374,40 +375,74 @@ Shader "Relativity/ColorShift"
 		rgbFinal = constrainRGB(rgbFinal.x,rgbFinal.y, rgbFinal.z); //might not be needed
 
 		//Test if unity_Scale is correct, unity occasionally does not give us the correct scale and you will see strange things in vertices,  this is just easy way to test
-  		//float4x4 temp  = mul(unity_Scale.w*_Object2World, _World2Object);
-		//float4 temp2 = mul( temp,float4( (float)rgbFinal.x,(float)rgbFinal.y,(float)rgbFinal.z,data.a));
+  		//float4x4 temp  = UnityObjectToClipPos(unity_Scale.w*_Object2World, _World2Object);
+		//float4 temp2 = UnityObjectToClipPos( temp,float4( (float)rgbFinal.x,(float)rgbFinal.y,(float)rgbFinal.z,data.a));
 		//return temp2;	
 		//float4 temp2 =float4( (float)rgbFinal.x,(float)rgbFinal.y,(float)rgbFinal.z,data.a );
 		return float4((float)rgbFinal.x,(float)rgbFinal.y,(float)rgbFinal.z,data.a); //use me for any real build
 	}
 
+
 	ENDCG
-	
-Subshader {
-	
- Pass {
-	  //Shader properties, for things such as transparency
-	  Cull Off ZWrite On
-	  ZTest LEqual 
-	  Fog { Mode off } //Fog does not shift properly and there is no way to do so with this fog
-	  Tags {"RenderType"="Transparent" "Queue"="Transparent"}
 
-	  AlphaTest Greater [_Cutoff]
-	  Blend SrcAlpha OneMinusSrcAlpha
+	SubShader {
+		Pass {
+		  //Shader properties, for things such as transparency
+		  Cull Off ZWrite On
+		  ZTest LEqual 
+		  Fog { Mode off } //Fog does not shift properly and there is no way to do so with this fog
+		  Tags {"RenderType"="Transparent" "Queue"="Transparent"}
 
-      CGPROGRAM
-      
-      #pragma fragmentoption ARB_precision_hint_nicest
-      
-      #pragma vertex vert
-      #pragma fragment frag
-	  #pragma target 3.0
-      
-      ENDCG
-  }
+		  AlphaTest Greater [_Cutoff]
+		  Blend SrcAlpha OneMinusSrcAlpha
+
+	      CGPROGRAM
+	      
+	      #pragma fragmentoption ARB_precision_hint_nicest
+	      
+	      #pragma vertex vert
+	      #pragma fragment frag
+		  #pragma target 3.0
+	      
+	      ENDCG
+  		}	
+		// Tags { "RenderType"="Opaque" }
+		// LOD 200
+
+		// CGPROGRAM
+		// // Physically based Standard lighting model, and enable shadows on all light types
+		// #pragma surface surf Standard fullforwardshadows
+
+		// // Use shader model 3.0 target, to get nicer looking lighting
+		// #pragma target 3.0
+
+		// sampler2D _MainTex;
+
+		// struct Input {
+		// 	float2 uv_MainTex;
+		// };
+
+		// half _Glossiness;
+		// half _Metallic;
+		// fixed4 _Color;
+
+		// // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
+		// // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
+		// // #pragma instancing_options assumeuniformscaling
+		// UNITY_INSTANCING_BUFFER_START(Props)
+		// 	// put more per-instance properties here
+		// UNITY_INSTANCING_BUFFER_END(Props)
+
+		// void surf (Input IN, inout SurfaceOutputStandard o) {
+		// 	// Albedo comes from a texture tinted by color
+		// 	fixed4 c = tex2D (_MainTex, IN.uv_MainTex) * _Color;
+		// 	o.Albedo = c.rgb;
+		// 	// Metallic and smoothness come from slider variables
+		// 	o.Metallic = _Metallic;
+		// 	o.Smoothness = _Glossiness;
+		// 	o.Alpha = c.a;
+		// }
+		// ENDCG
+	}
+	FallBack "Diffuse"
 }
-
-Fallback "Unlit/Transparent"
-	
-} // shader
-
