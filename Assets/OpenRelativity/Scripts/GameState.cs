@@ -52,7 +52,7 @@ public class GameState : MonoBehaviour
     private double cSqrd;
 	
 	//Use this to determine the state of the color shader. If it's True, all you'll see is the lorenz transform.
-	private bool shaderOff = false;
+	private bool shaderOff = true;
 	
 	//Did we hit the menu key?
     public bool menuKeyDown = false;
