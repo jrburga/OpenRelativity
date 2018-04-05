@@ -4,7 +4,6 @@ using System.Collections;
 public class ForeverMovement : MonoBehaviour
 {
 	//Consts 
-	private const float SLOW_DOWN_RATE = 2f;
 	private const float ACCEL_RATE = 2f;
 	private const int INIT_FRAME_WAIT = 5;
 	private const float DEGREE_TO_RADIAN_CONST = 57.2957795f;
@@ -14,8 +13,6 @@ public class ForeverMovement : MonoBehaviour
 	public float rotSpeed;
 	//Keep track of the camera transform
 	public Transform camTransform;
-	//Just turn this negative when they press the Y button for inversion.
-	public bool decelerate;
 	//What is our current target for the speed of light?
 	public int speedOfLightTarget;
 	//What is each step we take to reach that target?
@@ -102,7 +99,8 @@ public class ForeverMovement : MonoBehaviour
 				if (constraintXZ)
 					cameraRotation = Quaternion.AngleAxis(camTransform.eulerAngles.y, Vector3.up);
 
-				addedVelocity += Vector3.forward*ACCEL_RATE*Time.deltaTime;
+				addedVelocity -= Vector3.forward*ACCEL_RATE*Time.deltaTime;
+//				state.keyHit = true;
 
 				//Add the velocities here. remember, this is the equation:
 				//vNew = (1/(1+vOld*vAddx/cSqrd))*(Vector3(vAdd.x+vOld.x,vAdd.y/Gamma,vAdd.z/Gamma))

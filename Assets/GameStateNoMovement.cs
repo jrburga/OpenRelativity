@@ -103,10 +103,11 @@ public class GameStateNoMovement : MonoBehaviour
 	public const int splitDistance = 21000;
 	#endregion
 
-
+	private Rigidbody playerBody;
 	public void Awake()
 	{
 		//Initialize the player's speed to zero
+		playerBody = transform.parent.GetComponent<Rigidbody>();
 		playerVelocityVector = Vector3.zero;
 		playerVelocity = 0;
 		//Set our constants
@@ -140,7 +141,7 @@ public class GameStateNoMovement : MonoBehaviour
 		else 
 		{
 			//When we pause, set our velocity to zero, show the cursor and unlock it.
-			GameObject.FindGameObjectWithTag(Tags.playerMesh).GetComponent<Rigidbody>().velocity = Vector3.zero;
+			playerBody.velocity = Vector3.zero;
 			movementFrozen = true;
 			Cursor.visible = true;
 			Cursor.lockState = CursorLockMode.None;
