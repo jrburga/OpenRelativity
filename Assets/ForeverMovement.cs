@@ -99,7 +99,7 @@ public class ForeverMovement : MonoBehaviour
 				if (constraintXZ)
 					cameraRotation = Quaternion.AngleAxis(camTransform.eulerAngles.y, Vector3.up);
 
-				addedVelocity -= Vector3.forward*ACCEL_RATE*Time.deltaTime;
+				addedVelocity -= Vector3.forward*ACCEL_RATE*(float)Time.deltaTime;
 //				state.keyHit = true;
 
 				//Add the velocities here. remember, this is the equation:
