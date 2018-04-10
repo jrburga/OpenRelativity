@@ -32,6 +32,7 @@ public class MovementScripts: MonoBehaviour
 
     void Start()
     {
+		camTransform.localRotation = Quaternion.identity;
 		//grab Game State, we need it for many actions
         state = GetComponent<GameState>();
        //Lock and hide cursor

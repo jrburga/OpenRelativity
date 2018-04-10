@@ -1,6 +1,6 @@
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
-Shader "Relativity2/ColorShft" {
+Shader "Relativity/ColorShft" {
 	Properties {
 		_MainTex ("Albedo (RGB)", 2D) = "white" {}
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
