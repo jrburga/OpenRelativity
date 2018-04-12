@@ -216,10 +216,10 @@ public class GameState : MonoBehaviour
             //Send world time to shader
             Shader.SetGlobalFloat("_wrldTime", (float)TotalTimeWorld);
 
-			Debug.Log (string.Format ("worldTime {0}", (float)TotalTimeWorld));
-			Debug.Log (string.Format ("vpc {0}", vPc));
-			Debug.Log(string.Format("playerOffset {0}", playerOffset));
-			Debug.Log(string.Format("colorShift {0}", !shaderOff));
+			// Debug.Log (string.Format ("worldTime {0}", (float)TotalTimeWorld));
+			// Debug.Log (string.Format ("vpc {0}", vPc));
+			// Debug.Log(string.Format("playerOffset {0}", playerOffset));
+			// Debug.Log(string.Format("colorShift {0}", !shaderOff));
            
              /******************************
              * PART TWO OF ALGORITHM

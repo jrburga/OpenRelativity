@@ -231,6 +231,8 @@ public class RelativisticObject : MonoBehaviour {
 
 		if (meshFilter != null && !state.MovementFrozen)
 		{
+			bool x = meshFilter != null;
+			Debug.Log(x);
 			#region meshDensity
 			//This is where I'm going to change our mesh density.
 			//I'll take the model, and pass MeshDensity the mesh and unchanged vertices
