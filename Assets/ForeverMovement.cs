@@ -1,33 +1,40 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ForeverMovement : MonoBehaviour
+public class ForeverMovement: MonoBehaviour
 {
 	//Consts 
+	private const float SLOW_DOWN_RATE = 2f;
 	private const float ACCEL_RATE = 2f;
 	private const int INIT_FRAME_WAIT = 5;
 	private const float DEGREE_TO_RADIAN_CONST = 57.2957795f;
 	public float controllerBoost=6000;
 	//Affect our rotation speed
-	public bool constraintXZ = false;
 	public float rotSpeed;
 	//Keep track of the camera transform
 	public Transform camTransform;
+	//Just turn this negative when they press the Y button for inversion.
+	private int inverted;
 	//What is our current target for the speed of light?
 	public int speedOfLightTarget;
 	//What is each step we take to reach that target?
 	private float speedOfLightStep;
 	//For now, you can change this how you like.
-	public float mouseSensitivity;  
+	public float mouseSensitivity;
+	//So we can use getAxis as keyHit function
+	public bool invertKeyDown = false;    
 	//Keep track of total frames passed
 	int frames;    
 	//How fast are we going to shoot the bullets?
 	public float viwMax = 3;
 	//Gamestate reference for quick access
+
 	GameState state;
 
 	void Start()
 	{
+			
+		camTransform.localRotation = Quaternion.identity;
 		//grab Game State, we need it for many actions
 		state = GetComponent<GameState>();
 		//Lock and hide cursor
@@ -35,6 +42,9 @@ public class ForeverMovement : MonoBehaviour
 		Cursor.visible = false;
 		//Set the speed of light to the starting speed of light in GameState
 		speedOfLightTarget = (int)state.SpeedOfLight;
+		//Inverted, at first
+		inverted = -1;
+
 
 		viwMax = Mathf.Min(viwMax,(float)GameObject.FindGameObjectWithTag(Tags.player).GetComponent<GameState>().MaxSpeed);
 
@@ -50,6 +60,18 @@ public class ForeverMovement : MonoBehaviour
 			if(!state.MovementFrozen)
 			{
 				state.deltaRotation = Vector3.zero;
+
+				//If they press the Y button, invert all Y axes
+				if (Input.GetAxis("Invert Button") > 0 && !invertKeyDown)
+				{
+					inverted *= -1;
+					invertKeyDown = true;
+				}
+				//And if they released it, set the invertkeydown to false.
+				else if ( !(Input.GetAxis("Invert Button") > 0))
+				{
+					invertKeyDown = false;
+				}
 
 				#region ControlScheme
 
@@ -87,21 +109,62 @@ public class ForeverMovement : MonoBehaviour
 				}
 
 				//Store our added velocity into temporary variable addedVelocity
-				Vector3 addedVelocity = Vector3.zero;
+				Vector3 addedVelocity = -Vector3.forward*ACCEL_RATE* (float)Time.deltaTime;
 
 				//Turn our camera rotation into a Quaternion. This allows us to make where we're pointing the direction of our added velocity.
 				//If you want to constrain the player to just x/z movement, with no Y direction movement, comment out the next two lines
 				//and uncomment the line below that is marked
-				float cameraRotationAngle = -DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(camTransform.forward, Vector3.forward));
-				Quaternion cameraRotation = Quaternion.AngleAxis(cameraRotationAngle, Vector3.Cross(camTransform.forward, Vector3.forward).normalized);
+//				float cameraRotationAngle = -DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(camTransform.forward, Vector3.forward));
+//				Quaternion cameraRotation = Quaternion.AngleAxis(cameraRotationAngle, Vector3.Cross(camTransform.forward, Vector3.forward).normalized);
 
 				//UNCOMMENT THIS LINE if you would like to constrain the player to just x/z movement.
-				if (constraintXZ)
-					cameraRotation = Quaternion.AngleAxis(camTransform.eulerAngles.y, Vector3.up);
+				//Quaternion cameraRotation = Quaternion.AngleAxis(camTransform.eulerAngles.y, Vector3.up);
 
-				addedVelocity -= Vector3.forward*ACCEL_RATE*(float)Time.deltaTime;
-//				state.keyHit = true;
 
+//				float temp;
+				//Movement due to left/right input
+//				addedVelocity -= 
+				state.keyHit = true;
+//				if (temp != 0)
+//				{
+//					state.keyHit = true;
+//				}
+//
+//				addedVelocity += new Vector3((temp = -Input.GetAxis("Horizontal"))*ACCEL_RATE * (float)Time.deltaTime, 0, 0);
+//				if (temp != 0)
+//				{
+//					state.keyHit = true;
+//				}
+
+				//And rotate our added velocity by camera angle
+
+//				addedVelocity = addedVelocity;
+
+				//AUTO SLOW DOWN CODE BLOCK
+
+				//If we are not adding velocity this round to our x direction, slow down
+//				if (addedVelocity.x == 0)
+//				{
+//					//find our current direction of movement and oppose it
+//					addedVelocity += new Vector3(-1*SLOW_DOWN_RATE*playerVelocityVector.x * (float)Time.deltaTime, 0, 0);
+//				}
+//				//If we are not adding velocity this round to our z direction, slow down
+//				if (addedVelocity.z == 0)
+//				{
+//					addedVelocity += new Vector3(0, 0, -1*SLOW_DOWN_RATE*playerVelocityVector.z * (float)Time.deltaTime);
+//				}
+//				//If we are not adding velocity this round to our y direction, slow down
+//				if (addedVelocity.y == 0)
+//				{
+//					addedVelocity += new Vector3(0, -1*SLOW_DOWN_RATE*playerVelocityVector.y * (float)Time.deltaTime,0);
+//				}
+				/*
+				 * IF you turn on this bit of code, you'll get head bob. It's a fun little effect, but if you make the magnitude of the cosine too large it gets sickening.
+				if (!double.IsNaN((float)(0.2 * Mathf.Cos((float)GetComponent<GameState>().TotalTimePlayer) * Time.deltaTime)) && frames > 2)
+				{
+					addedVelocity.y += (float)(0.2 * Mathf.Cos((float)GetComponent<GameState>().TotalTimePlayer) * Time.deltaTime);
+				}
+				*/	
 				//Add the velocities here. remember, this is the equation:
 				//vNew = (1/(1+vOld*vAddx/cSqrd))*(Vector3(vAdd.x+vOld.x,vAdd.y/Gamma,vAdd.z/Gamma))
 				if (addedVelocity.sqrMagnitude != 0)
@@ -142,7 +205,7 @@ public class ForeverMovement : MonoBehaviour
 				//Now, if we're not at our target, move towards the target speed that we're hoping for
 				if (state.SpeedOfLight < speedOfLightTarget * .995)
 				{
-					//Then we changege the speed of light, so that we get a smooth change from one speed of light to the next.
+					//Then we change the speed of light, so that we get a smooth change from one speed of light to the next.
 					state.SpeedOfLight += speedOfLightStep;
 				}
 				else if (state.SpeedOfLight > speedOfLightTarget * 1.005)
@@ -156,6 +219,45 @@ public class ForeverMovement : MonoBehaviour
 					state.SpeedOfLight = speedOfLightTarget;
 				}
 
+				//MOUSE CONTROLS
+				//Current position of the mouse
+				//Difference between last frame's mouse position
+				//X axis position change
+				float positionChangeX = -(float)Input.GetAxis("Mouse X");
+
+				//Y axis position change
+				float positionChangeY = (float)inverted * Input.GetAxis("Mouse Y");
+
+				//Use these to determine camera rotation, that is, to look around the world without changing direction of motion
+				//These two are for X axis rotation and Y axis rotation, respectively
+				float viewRotY = 0;
+				if(Mathf.Abs(positionChangeX)<=1 && Mathf.Abs(positionChangeY)<=1)
+				{
+					//Take the position changes and translate them into an amount of rotation
+					viewRotX = (float)(-positionChangeX * Time.deltaTime * rotSpeed * mouseSensitivity * controllerBoost);
+					viewRotY = (float)(positionChangeY * Time.deltaTime * rotSpeed * mouseSensitivity * controllerBoost);
+				}
+				else
+				{
+					//Take the position changes and translate them into an amount of rotation
+					viewRotX = (float)(-positionChangeX * Time.deltaTime * rotSpeed * mouseSensitivity);
+					viewRotY = (float)(positionChangeY * Time.deltaTime * rotSpeed * mouseSensitivity);
+				}
+				//Perform Rotation on the camera, so that we can look in places that aren't the direction of movement
+				//Wait some frames on start up, otherwise we spin during the intialization when we can't see yet
+				if (frames > INIT_FRAME_WAIT) 
+				{
+					camTransform.Rotate(new Vector3(0, viewRotX, 0), Space.World);
+					if ((camTransform.eulerAngles.x + viewRotY < 90  && camTransform.eulerAngles.x + viewRotY > 90 - 180) || (camTransform.eulerAngles.x + viewRotY > 270 && camTransform.eulerAngles.x + viewRotY < 270+180))
+					{
+						camTransform.Rotate(new Vector3(viewRotY, 0, 0));
+					}
+				}
+				else{
+					//keep track of our frames
+					frames++;                
+				}
+
 				//If we have a speed of light less than max speed, fix it.
 				//This should never happen
 				if (state.SpeedOfLight < state.MaxSpeed)
@@ -163,6 +265,9 @@ public class ForeverMovement : MonoBehaviour
 					state.SpeedOfLight = state.MaxSpeed;
 				}
 
+				if (state.playerTransform.localPosition.z > 400) {
+					state.playerTransform.localPosition = new Vector3 ( 0, 0, 100);
+				}
 
 				#endregion
 

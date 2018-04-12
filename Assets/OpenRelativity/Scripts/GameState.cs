@@ -184,7 +184,8 @@ public class GameState : MonoBehaviour
         if (!movementFrozen)
         {
 			//Put our player position into the shader so that it can read it.
-            Shader.SetGlobalVector("_playerOffset", new Vector4(playerTransform.position.x, playerTransform.position.y, playerTransform.position.z, 0));
+			Vector4 playerOffset = new Vector4((float)playerTransform.position.x, (float)playerTransform.position.y, (float)playerTransform.position.z, 0);
+            Shader.SetGlobalVector("_playerOffset", playerOffset);
            
 		
             //if we reached max speed, forward or backwards, keep at max speed
@@ -210,9 +211,15 @@ public class GameState : MonoBehaviour
             }
 
             //Send v/c to shader
-            Shader.SetGlobalVector("_vpc", new Vector4(-playerVelocityVector.x, -playerVelocityVector.y, -playerVelocityVector.z, 0) / (float)c);
+			Vector4 vPc = new Vector4(-playerVelocityVector.x, -playerVelocityVector.y, -playerVelocityVector.z, 0) / (float)c;
+            Shader.SetGlobalVector("_vpc", vPc);
             //Send world time to shader
             Shader.SetGlobalFloat("_wrldTime", (float)TotalTimeWorld);
+
+			Debug.Log (string.Format ("worldTime {0}", (float)TotalTimeWorld));
+			Debug.Log (string.Format ("vpc {0}", vPc));
+			Debug.Log(string.Format("playerOffset {0}", playerOffset));
+			Debug.Log(string.Format("colorShift {0}", !shaderOff));
            
              /******************************
              * PART TWO OF ALGORITHM

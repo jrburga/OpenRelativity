@@ -119,7 +119,7 @@ public class VRMovementScript: MonoBehaviour
 
 				//And rotate our added velocity by camera angle
 
-				addedVelocity = cameraRotation * addedVelocity;
+				addedVelocity = addedVelocity;
 
 				//AUTO SLOW DOWN CODE BLOCK
 				if (decelerate) {
