@@ -20,4 +20,9 @@ public class VRCamCalibration : MonoBehaviour {
 		CalibrateCam ();
 	}
 
+	void Update () {
+		if (Input.GetAxis ("Jump") == 1.0f) {
+			CalibrateCam ();
+		}
+	}
 }

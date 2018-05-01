@@ -92,6 +92,7 @@ namespace Valve.VR.InteractionSystem
 		private int dbgObjectIndex = 0;
 
 		private bool driving = false;
+		public bool steering = false;
 
 		// If the drive is limited as is at min/max, angles greater than this are ignored 
 		private float minMaxAngularThreshold = 1.0f;
@@ -224,6 +225,7 @@ namespace Valve.VR.InteractionSystem
 			}
 
 			driving = false;
+			steering = false;
 			handHoverLocked = null;
 		}
 
@@ -243,6 +245,7 @@ namespace Valve.VR.InteractionSystem
 				}
 
 				driving = true;
+				steering = true;
 
 				ComputeAngle( hand );
 				UpdateAll();
@@ -256,7 +259,9 @@ namespace Valve.VR.InteractionSystem
 				{
 					hand.HoverUnlock( GetComponent<Interactable>() );
 					handHoverLocked = null;
+
 				}
+				steering = false;
 			}
 			else if ( driving && hand.GetStandardInteractionButton() && hand.hoveringInteractable == GetComponent<Interactable>() )
 			{
@@ -373,14 +378,14 @@ namespace Valve.VR.InteractionSystem
 		{
 			if ( limited )
 			{
-				// Map it to a [0, 1] value
+				// Map it to a [-1, 1] value
 				linearMapping.value = ( outAngle - minAngle ) / ( maxAngle - minAngle );
 			}
 			else
 			{
-				// Normalize to [0, 1] based on 360 degree windings
+				// Normalize to based on 360 degree windings
 				float flTmp = outAngle / 360.0f;
-				linearMapping.value = flTmp - Mathf.Floor( flTmp );
+				linearMapping.value = flTmp;
 			}
 
 			UpdateDebugText();
@@ -414,7 +419,7 @@ namespace Valve.VR.InteractionSystem
 		//-------------------------------------------------
 		// Updates the Debug TextMesh with the linear mapping value and the angle
 		//-------------------------------------------------
-		private void UpdateAll()
+		public void UpdateAll()
 		{
 			UpdateLinearMapping();
 			UpdateGameObject();

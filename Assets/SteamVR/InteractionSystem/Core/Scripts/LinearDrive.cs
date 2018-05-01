@@ -32,6 +32,7 @@ namespace Valve.VR.InteractionSystem
 		void Awake()
 		{
 			mappingChangeSamples = new float[numMappingChangeSamples];
+
 		}
 
 
@@ -54,6 +55,11 @@ namespace Valve.VR.InteractionSystem
 			{
 				UpdateLinearMapping( transform );
 			}
+
+			if (startPosition != null) {
+				transform.localPosition = startPosition.localPosition;
+			}
+
 		}
 
 
