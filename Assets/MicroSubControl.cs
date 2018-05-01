@@ -6,6 +6,8 @@ namespace Valve.VR.InteractionSystem
 {
 	public class MicroSubControl : MonoBehaviour {
 
+		private const float DEGREE_TO_RADIAN_CONST = 57.2957795f;
+
 		private float targetSpeed = 0.0f;
 		public float maxSpeed = 20.0f;
 
@@ -28,6 +30,8 @@ namespace Valve.VR.InteractionSystem
 
 		GameState state;
 		// Use this for initialization
+
+		Vector3 playerVelocityVector;
 		void Start () {
 			state = GetComponent<GameState> ();
 			driveMapping = linearMapping.GetComponent<LinearMapping> ();
@@ -69,6 +73,13 @@ namespace Valve.VR.InteractionSystem
 			transform.Rotate (rotationSpeed*Vector3.up * Time.deltaTime);
 
 			body.velocity = transform.forward * targetSpeed;
+
+			// Cache the player velocity vector (but not in a new variable)
+			playerVelocityVector = state.PlayerVelocityVector;
+			//Get our angle between the velocity and the X axis. Get the angle in degrees (radians suck)
+			float rotationAroundX = DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(playerVelocityVector, Vector3.right) / playerVelocityVector.magnitude);
+
+
 
 		}
 	}
