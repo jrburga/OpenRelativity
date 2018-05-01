@@ -1281,6 +1281,11 @@ Transform:
   m_Father: {fileID: 2086356053}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1698302462 stripped
+GameObject:
+  m_PrefabParentObject: {fileID: 1000013002967384, guid: c9c10e442362b304fa498afd8bec3b1c,
+    type: 2}
+  m_PrefabInternal: {fileID: 1278671373}
 --- !u!1 &1761832469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1757,6 +1762,7 @@ MonoBehaviour:
   maxSpeed: 20
   maxRotationSpeed: 45
   linearMapping: {fileID: 499024490}
+  microSub: {fileID: 1698302462}
   wheel: {fileID: 993475591}
 --- !u!114 &2025057531
 MonoBehaviour:
