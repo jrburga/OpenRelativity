@@ -16,10 +16,15 @@ namespace Valve.VR.InteractionSystem
 		public GameObject linearMapping;
 		private LinearMapping driveMapping;
 
+		private float msRotation = 0.0f;
+		private float msTargetRotation = 20.0f;
+		public GameObject microSub;
 		public GameObject wheel;
 		private CircularDrive circularDrive;
 
 		private Rigidbody body;
+
+		public int speedOfLightTarget;
 
 		GameState state;
 		// Use this for initialization
@@ -29,6 +34,8 @@ namespace Valve.VR.InteractionSystem
 			circularDrive = wheel.GetComponent<CircularDrive> ();
 
 			body = gameObject.GetComponent<Rigidbody> ();
+
+			speedOfLightTarget = (int)state.SpeedOfLight;
 		}
 
 		void UpdateControls () {
@@ -46,12 +53,21 @@ namespace Valve.VR.InteractionSystem
 			}
 		}
 
+		void UpdateMicroSub() {
+
+			// To broken to use currently. The problem is using the right angles and such.
+			msRotation = Vector3.Angle (microSub.transform.up, transform.up);
+			microSub.transform.Rotate (-(rotationSpeed-msRotation)* rotationSpeed * Vector3.forward * Time.deltaTime);
+		}
+
 		// Update is called once per frame
 		void LateUpdate () {
 			UpdateControls ();
-		
+//			UpdateMicroSub ();
+
 
 			transform.Rotate (rotationSpeed*Vector3.up * Time.deltaTime);
+
 			body.velocity = transform.forward * targetSpeed;
 
 		}
