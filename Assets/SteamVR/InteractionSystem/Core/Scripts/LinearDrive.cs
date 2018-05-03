@@ -26,13 +26,13 @@ namespace Valve.VR.InteractionSystem
 		private float prevMapping = 0.0f;
 		private float mappingChangeRate;
 		private int sampleCount = 0;
+	
 
 
 		//-------------------------------------------------
 		void Awake()
 		{
 			mappingChangeSamples = new float[numMappingChangeSamples];
-
 		}
 
 

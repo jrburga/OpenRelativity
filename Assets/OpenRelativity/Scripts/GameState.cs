@@ -211,7 +211,7 @@ public class GameState : MonoBehaviour
             }
 
             //Send v/c to shader
-			Vector4 vPc = new Vector4(-playerVelocityVector.x, -playerVelocityVector.y, -playerVelocityVector.z, 0) / (float)c;
+			Vector4 vPc = new Vector4(playerVelocityVector.x, playerVelocityVector.y, playerVelocityVector.z, 0) / (float)c;
             Shader.SetGlobalVector("_vpc", vPc);
             //Send world time to shader
             Shader.SetGlobalFloat("_wrldTime", (float)TotalTimeWorld);
@@ -244,11 +244,11 @@ public class GameState : MonoBehaviour
                 }
             }
         
-            //Set our rigidbody's velocity
+            //Set our rigid's velocity
             if (!double.IsNaN(deltaTimePlayer) && !double.IsNaN(sqrtOneMinusVSquaredCWDividedByCSquared))
             {
 //                GameObject.FindGameObjectWithTag(Tags.playerMesh).GetComponent<Rigidbody>().velocity = -1*(playerVelocityVector / (float)sqrtOneMinusVSquaredCWDividedByCSquared);
-				playerBody.velocity = -1*(playerVelocityVector / (float)sqrtOneMinusVSquaredCWDividedByCSquared);
+				playerBody.velocity = (playerVelocityVector / (float)sqrtOneMinusVSquaredCWDividedByCSquared);
             }
 			//But if either of those two constants is null due to a zero error, that means our velocity is zero anyways.
             else

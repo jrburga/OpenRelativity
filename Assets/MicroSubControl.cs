@@ -8,71 +8,113 @@ namespace Valve.VR.InteractionSystem
 
 		private const float DEGREE_TO_RADIAN_CONST = 57.2957795f;
 
+		private int speedOfLightTarget;
+		private float speedOfLightStep;
+
 		private float targetSpeed = 0.0f;
-		public float maxSpeed = 20.0f;
 
 		private float rotationSpeed = 0.0f;
-		public float maxRotationSpeed = 40.0f;
+		public float maxRotationSpeed;
 
 		private Vector3 driveVector;
 		public GameObject linearMapping;
+		public GameObject lightSpeedMapping;
+		public GameObject turnLinearMapping;
+		private LinearMapping lightMapping;
 		private LinearMapping driveMapping;
+		private LinearMapping turnMapping;
 
 		private float msRotation = 0.0f;
 		private float msTargetRotation = 20.0f;
 		public GameObject microSub;
-		public GameObject wheel;
-		private CircularDrive circularDrive;
 
 		private Rigidbody body;
 
 		private Vector3 deltaVelocity;
+
+		public GameObject playerObject;
 
 		// Use this for initialization
 
 		Vector3 playerVelocityVector;
 		GameState state;
 		void Start () {
-			state = GetComponent<GameState>();
+			state = playerObject.GetComponent<GameState>();
 			driveMapping = linearMapping.GetComponent<LinearMapping> ();
-			circularDrive = wheel.GetComponent<CircularDrive> ();
+			turnMapping = turnLinearMapping.GetComponent<LinearMapping> ();
+			lightMapping = lightSpeedMapping.GetComponent<LinearMapping> ();
 			body = gameObject.GetComponent<Rigidbody> ();
+
+			speedOfLightTarget = (int)state.SpeedOfLight;
 		}
 
 		void UpdateControls () {
 			UpdateForwardDrive ();
 			UpdateTurningDrive ();
+			UpdateLightSpeedControl ();
 		}
 
 		void UpdateForwardDrive () {
 			if (driveMapping != null) {
-				targetSpeed = driveMapping.value * maxSpeed;
+				targetSpeed = driveMapping.value * (float)state.maxPlayerSpeed;
 			} else {
 				driveMapping = linearMapping.GetComponent<LinearMapping> ();
 			}	
 		}
 
 		void UpdateTurningDrive () {
-			if (circularDrive != null) {
-				
-				rotationSpeed = circularDrive.linearMapping.value * maxRotationSpeed;
+			if (turnMapping != null) {
+				rotationSpeed = (turnMapping.value-.5f)*2f * maxRotationSpeed;
 			} else {
-				circularDrive = wheel.GetComponent<CircularDrive> ();
+				Debug.Log ("No turn mapping");
 			}
 		}
 
-		void UpdateMicroSub() {
-
-			// To broken to use currently. The problem is using the right angles and such.
-			msRotation = Vector3.Angle (microSub.transform.up, transform.up);
-			microSub.transform.Rotate (-(rotationSpeed-msRotation)* rotationSpeed * Vector3.forward * Time.deltaTime);
+		void UpdateLightSpeedControl () {
+			if (lightMapping != null) {
+				speedOfLightTarget = (int) (state.totalC * (1.0f-lightMapping.value));
+			} else {
+				lightMapping = lightSpeedMapping.GetComponent<LinearMapping> ();
+			}
 		}
 
-		// Update is called once per frame
-		void LateUpdate () {
-			UpdateControls ();
-//			UpdateMicroSub ();
+		void UpdateSpeedOfLight () {
+			speedOfLightStep = Mathf.Abs((float)(state.SpeedOfLight - speedOfLightTarget) / 20);
+			//Now, if we're not at our target, move towards the target speed that we're hoping for
 
+			if (state.SpeedOfLight < speedOfLightTarget * .995)
+			{
+
+				//Then we changege the speed of light, so that we get a smooth change from one speed of light to the next.
+				state.SpeedOfLight += speedOfLightStep;
+
+			}
+			else if (state.SpeedOfLight > speedOfLightTarget * 1.005)
+			{
+				//See above
+
+				state.SpeedOfLight -= speedOfLightStep;
+			}
+			//If we're within a +-.05 distance of our target, just set it to be our target.
+			else if (state.SpeedOfLight != speedOfLightTarget)
+			{
+				state.SpeedOfLight = speedOfLightTarget;
+			}
+
+			//If we have a speed of light less than max speed, fix it.
+			//This should never happen
+			if (state.SpeedOfLight < state.MaxSpeed)
+			{
+				state.SpeedOfLight = state.MaxSpeed;
+			}
+
+			//Send current speed of light to the shader
+			Debug.Log(state.SpeedOfLight);
+			Shader.SetGlobalFloat("_spdOfLight", (float)state.SpeedOfLight);
+
+		}
+
+		void UpdateMovement () {
 			transform.Rotate (rotationSpeed*Vector3.up * Time.deltaTime);
 
 			Vector3 playerVelocityVector = state.PlayerVelocityVector;
@@ -98,7 +140,7 @@ namespace Valve.VR.InteractionSystem
 			float rotationAngle = -DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(transform.forward, Vector3.forward));
 			Quaternion rotation = Quaternion.AngleAxis(rotationAngle, Vector3.Cross(transform.forward, Vector3.forward).normalized);
 
-			deltaVelocity = transform.forward*targetSpeed - body.velocity;
+			deltaVelocity = getDeltaVelocity();
 
 			//Add the velocities here. remember, this is the equation:
 			//vNew = (1/(1+vOld*vAddx/cSqrd))*(Vector3(vAdd.x+vOld.x,vAdd.y/Gamma,vAdd.z/Gamma))
@@ -119,10 +161,39 @@ namespace Valve.VR.InteractionSystem
 				rotatedVelocity = unRotateX * rotatedVelocity;
 				//Set it
 				state.PlayerVelocityVector = rotatedVelocity;
-				
+
+			}
+		}
+
+		void UpdateMicroSub() {
+
+			// To broken to use currently. The problem is using the right angles and such.
+			msRotation = Vector3.Angle (microSub.transform.up, transform.up);
+			microSub.transform.Rotate (-(rotationSpeed-msRotation)* rotationSpeed * Vector3.forward * Time.deltaTime);
+		}
+
+		Vector3 getDeltaVelocity() {
+			return transform.forward*targetSpeed - body.velocity;
+		}
+
+		// Update is called once per frame
+		void LateUpdate () {
+			UpdateControls ();
+			UpdateMovement ();
+			UpdateSpeedOfLight ();
+//			UpdateMicroSub ();
+			if (Camera.main)
+			{
+				Shader.SetGlobalFloat("xyr", (float)Camera.main.pixelWidth / Camera.main.pixelHeight);
+				Shader.SetGlobalFloat("xs", (float)Mathf.Tan(Mathf.Deg2Rad * Camera.main.fieldOfView / 2f));
+
+				//Don't cull because at high speeds, things come into view that are not visible normally
+				//This is due to the lorenz transformation, which is pretty cool but means that basic culling will not work.
+				Camera.main.layerCullSpherical = true; 
+				Camera.main.useOcclusionCulling = false;
 			}
 
-			body.velocity = transform.forward * targetSpeed;
+//			body.velocity = transform.forward * targetSpeed;
 		}
 	}
 }
