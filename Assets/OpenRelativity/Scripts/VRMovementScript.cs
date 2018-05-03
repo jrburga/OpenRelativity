@@ -12,8 +12,8 @@ public class VRMovementScript: MonoBehaviour
 	//Affect our rotation speed
 	public bool constraintXZ = false;
 	public float rotSpeed;
-	//Keep track of the camera transform
-	public Transform camTransform;
+	//Keep track of the PlayerObject Transform (This is the thing that's actually moving)
+	public Transform playerObjectTransform;
 	//Just turn this negative when they press the Y button for inversion.
 	public bool decelerate;
 	//What is our current target for the speed of light?
@@ -95,52 +95,17 @@ public class VRMovementScript: MonoBehaviour
 				//Turn our camera rotation into a Quaternion. This allows us to make where we're pointing the direction of our added velocity.
 				//If you want to constrain the player to just x/z movement, with no Y direction movement, comment out the next two lines
 				//and uncomment the line below that is marked
-				float cameraRotationAngle = -DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(camTransform.forward, Vector3.forward));
-				Quaternion cameraRotation = Quaternion.AngleAxis(cameraRotationAngle, Vector3.Cross(camTransform.forward, Vector3.forward).normalized);
+				float objRotationAngle = -DEGREE_TO_RADIAN_CONST * Mathf.Acos(Vector3.Dot(playerObjectTransform.forward, Vector3.forward));
+				Quaternion objRotation = Quaternion.AngleAxis(objRotationAngle, Vector3.Cross(playerObjectTransform.forward, Vector3.forward).normalized);
 
 				//UNCOMMENT THIS LINE if you would like to constrain the player to just x/z movement.
-				if (constraintXZ)
-					cameraRotation = Quaternion.AngleAxis(camTransform.eulerAngles.y, Vector3.up);
-				
-
-				float temp;
-				//Movement due to left/right input
-				addedVelocity += new Vector3(0, 0, (temp = Input.GetAxis("Vertical"))*ACCEL_RATE* (float)Time.deltaTime);
-				if (temp != 0)
-				{
-					state.keyHit = true;
-				}
-
-				addedVelocity += new Vector3((temp = -Input.GetAxis("Horizontal"))*ACCEL_RATE * (float)Time.deltaTime, 0, 0);
-				if (temp != 0)
-				{
-					state.keyHit = true;
-				}
-
+				// if (constraintXZ)
+				// 	objRotation = Quaternion.AngleAxis(playerObjectTransform.eulerAngles.y, Vector3.up);
+			
 				//And rotate our added velocity by camera angle
 
 				addedVelocity = addedVelocity;
-
-				//AUTO SLOW DOWN CODE BLOCK
-				if (decelerate) {
-					//If we are not adding velocity this round to our x direction, slow down
-					if (addedVelocity.x == 0)
-					{
-						//find our current direction of movement and oppose it
-						addedVelocity += new Vector3(-1*SLOW_DOWN_RATE*playerVelocityVector.x * (float)Time.deltaTime, 0, 0);
-					}
-					//If we are not adding velocity this round to our z direction, slow down
-					if (addedVelocity.z == 0)
-					{
-						addedVelocity += new Vector3(0, 0, -1*SLOW_DOWN_RATE*playerVelocityVector.z * (float)Time.deltaTime);
-					}
-					//If we are not adding velocity this round to our y direction, slow down
-					if (addedVelocity.y == 0)
-					{
-						addedVelocity += new Vector3(0, -1*SLOW_DOWN_RATE*playerVelocityVector.y * (float)Time.deltaTime,0);
-					}
-				}
-
+				
 				//Add the velocities here. remember, this is the equation:
 				//vNew = (1/(1+vOld*vAddx/cSqrd))*(Vector3(vAdd.x+vOld.x,vAdd.y/Gamma,vAdd.z/Gamma))
 				if (addedVelocity.sqrMagnitude != 0)
